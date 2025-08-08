@@ -1,0 +1,33 @@
+Albanian
+Arabic
+Aramaic
+Armenian
+Azerbaijani
+Bosnian
+Chagatai
+English
+Ethiopic
+French
+Georgian
+German
+Greek
+Greek, Ancient (to 1453)
+Greek, Modern (1453-)
+Hebrew
+Italian
+Khwarazmian
+Kurdish
+Latin
+Mongolian
+Persian
+Romanian
+Russian
+Sanskrit
+Spanish
+Syriac
+Tatar
+Thai
+Turkish
+Uighur
+Urdu
+Uzbek
