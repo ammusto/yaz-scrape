@@ -1,4 +1,4 @@
-# Manuscript Search Application
+# YEK Catalogue Application
 
 yaz-scrape is a react-based search interface for Islamic manuscript data scraped from Turkey's YEK (Yazma Eserler Kurumu) portal. The data is indexed in OpenSearch and made searchable through a web interface. All manuscript data is scraped from the Turkish manuscript portal at https://portal.yek.gov.tr/. This includes metadata for manuscripts held in various Turkish libraries and collections. You must have an account on the portal in order to view more details about the manuscript and the images. This web app is just to facilitate searching the catalogue.
 
