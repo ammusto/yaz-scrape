@@ -31,7 +31,7 @@ const About = () => {
                         </p>
 
                         <h3>Search Features</h3>
-                        
+
                         <h4>Wildcard Searches</h4>
                         <p>
                             Search fields support wildcard characters for flexible pattern matching:
@@ -76,7 +76,8 @@ const About = () => {
                             <li><strong>Shelf Mark</strong> - Filter by shelf mark identifiers (supports wildcards)</li>
                             <li><strong>Collection</strong> - Select one or more collections</li>
                             <li><strong>Subject</strong> - Filter by subject categories</li>
-                            <li><strong>Author</strong> - Filter by specific authors (appears after initial search)</li>
+                            <li><strong>Language</strong> - Filter by language</li>
+                            <li><strong>Author</strong> - Filter results by specific authors (appears after initial search)</li>
                             <li><strong>Date Range</strong> - Specify a date range, with option to include undated manuscripts</li>
                         </ul>
                         <p>
@@ -97,7 +98,7 @@ const About = () => {
                             "محمد" to match "مُحَمَّد" or "محمّد" regardless of vocalization.
                         </p>
                         <p>
-                            <strong>Search Operators:</strong> All search terms within a single query are combined with AND logic by default. 
+                            <strong>Search Operators:</strong> All search terms within a single query are combined with AND logic by default.
                             This means searching for "kitab hadith" will only return results containing both "kitab" AND "hadith".
                         </p>
                     </div>
