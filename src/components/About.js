@@ -12,7 +12,7 @@ const About = () => {
                         <h2>About Yazma Eserler</h2>
 
                         <p>
-                            Yaz-scrape is a more responsive, user-friendly version of the catalogue of <a href="https://portal.yek.gov.tr/">Turkey's online manuscript collection</a> designed to make searching accessible, robust, and speedy. <strong>Note:</strong> This only contains the Arabic language subset of the catalogue, and clicking on any entry will take you to the online portal for more details. You must have an account on Turkey's Manuscript Portal in order to view the manuscript.
+                            Yaz-scrape is a more responsive, user-friendly version of the catalogue of <a href="https://portal.yek.gov.tr/">Turkey's online manuscript collection</a> designed to make searching accessible, robust, and speedy. <strong>Note:</strong> This only contains the Manuscript subset of the catalogue (ignoring printed editions held by YEK), and clicking on any entry will take you to the online portal for more details. You must have an account on Turkey's Manuscript Portal in order to view the manuscript.
                         </p>
 
                         <h3>Features</h3>
