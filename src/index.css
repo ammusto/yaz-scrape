@@ -3,6 +3,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    font-size:1rem;
 }
 
 body {
@@ -181,7 +182,6 @@ body {
     padding: 6px 10px;
     border: 1px solid #ddd;
     border-radius: 3px;
-    font-size: 13px;
 }
 
 /* Date filter */
@@ -207,15 +207,17 @@ body {
 .date-range {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
 }
 
 .date-input {
-    width: 80px;
+    width: 100px;
     padding: 4px 8px;
     border: 1px solid #ddd;
     border-radius: 3px;
     font-size: 13px;
+    height:2rem;
 }
 
 /* Results */
@@ -518,6 +520,61 @@ body {
     border: none;
     border-radius: 4px;
     cursor: pointer;
+}
+
+/* Skeleton loading animation */
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+/* Skeleton styles */
+.skeleton-title {
+    height: 24px;
+    background: #f0f0f0;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    animation: shimmer 2s infinite linear;
+    background-image: linear-gradient(to right, #f0f0f0 0%, #e0e0e0 20%, #f0f0f0 40%, #f0f0f0 100%);
+    background-size: 1000px 100%;
+}
+
+.skeleton-author {
+    height: 18px;
+    width: 70%;
+    background: #f0f0f0;
+    margin-bottom: 16px;
+    border-radius: 4px;
+    animation: shimmer 2s infinite linear;
+    background-image: linear-gradient(to right, #f0f0f0 0%, #e0e0e0 20%, #f0f0f0 40%, #f0f0f0 100%);
+    background-size: 1000px 100%;
+}
+
+.skeleton-field {
+    height: 16px;
+    background: #f0f0f0;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    animation: shimmer 2s infinite linear;
+    background-image: linear-gradient(to right, #f0f0f0 0%, #e0e0e0 20%, #f0f0f0 40%, #f0f0f0 100%);
+    background-size: 1000px 100%;
+}
+
+.search-result.skeleton {
+    background: white;
+    border: 1px solid #e0e0e0;
+    padding: 16px;
+    margin-bottom: 12px;
+    border-radius: 4px;
+}
+
+.main-content {
+    min-height: calc(100vh - 300px);
 }
 
 /* Responsive design */

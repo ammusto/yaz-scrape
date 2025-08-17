@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import SearchableDropdown from './components/SearchableDropdown';
 import Layout from './components/Layout';
 
@@ -20,12 +20,12 @@ interface Manuscript {
   date_full?: string;
   date_year?: number;
   url?: string;
-  language?: string;
   languages?: string[];
   physical_description?: string;
   shelf_mark?: string;
   previous_shelfmark?: string;
   type_of_material?: string;
+  alternative_titles?: string;
 }
 
 interface SearchQuery {
@@ -238,6 +238,7 @@ function App() {
   const [aggregatedAuthors, setAggregatedAuthors] = useState<Array<{ value: string, count: number }> | null>(null);
   const [aggregatedLanguages, setAggregatedLanguages] = useState<Array<{ value: string, count: number }> | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const resultsContainerRef = useRef<HTMLDivElement>(null);
 
   // Build OpenSearch query
   const buildQuery = useCallback((size?: number, from?: number, includeAggs: boolean = true) => {
@@ -248,32 +249,115 @@ function App() {
     queries.forEach(({ query, field }) => {
       if (!query) return;
 
+      const containsWildcard = query.includes('*') || query.includes('?');
+
       if (field === 'all') {
-        must.push({
-          query_string: {
-            query: query,
-            fields: [
-              'title_turkish', 'title_arabic', 'author', 'author_ar',
-              'library', 'collection', 'physical_description',
-              'shelf_mark', 'previous_shelfmark'
-            ],
-            default_operator: "AND"
-          }
-        });
+        if (containsWildcard) {
+          // For wildcard searches on all fields, use wildcard queries on keyword fields
+          must.push({
+            bool: {
+              should: [
+                // Title fields with wildcards
+                { wildcard: { "title_turkish.keyword": { value: query.toLowerCase() } } },
+                { wildcard: { "title_arabic.keyword": { value: query.toLowerCase() } } },
+                { wildcard: { "alternative_titles.keyword": { value: query.toLowerCase() } } },
+
+                // Author fields with wildcards
+                { wildcard: { "author.keyword": { value: query.toLowerCase() } } },
+                { wildcard: { "author_ar.keyword": { value: query.toLowerCase() } } },
+
+                // Other fields
+                { wildcard: { "library": { value: query.toLowerCase() } } },
+                { wildcard: { "collection": { value: query.toLowerCase() } } },
+                { wildcard: { "physical_description": { value: query.toLowerCase() } } },
+                { wildcard: { "shelf_mark": { value: query.toLowerCase() } } },
+                { wildcard: { "previous_shelfmark": { value: query.toLowerCase() } } },
+
+                // Also search in analyzed fields for better recall
+                {
+                  query_string: {
+                    query: query,
+                    fields: [
+                      'title_turkish', 'title_arabic', 'author', 'author_ar',
+                      'library', 'collection', 'physical_description',
+                      'shelf_mark', 'previous_shelfmark', 'alternative_titles', 'bib_number.text'
+                    ],
+                    default_operator: "AND"
+                  }
+                }
+              ],
+              minimum_should_match: 1
+            }
+          });
+        } else {
+          // Regular search without wildcards - use the standard approach
+          must.push({
+            query_string: {
+              query: query,
+              fields: [
+                'title_turkish', 'title_arabic', 'author', 'author_ar',
+                'library', 'collection', 'physical_description',
+                'shelf_mark', 'previous_shelfmark', 'alternative_titles', 'bib_number.text'
+              ],
+              default_operator: "AND"
+            }
+          });
+        }
       } else {
+        // Field-specific searches
         const fieldMap: Record<string, string[]> = {
-          'title': ['title_turkish', 'title_arabic'],
+          'title': ['title_turkish', 'title_arabic', 'alternative_titles'],
           'author': ['author', 'author_ar']
         };
 
         const fields = fieldMap[field] || [field];
-        must.push({
-          query_string: {
-            query: query,
-            fields: fields,
-            default_operator: "AND"
+
+        if (containsWildcard) {
+          // For wildcards in specific fields
+          const shouldClauses = [];
+
+          // Add wildcard queries on keyword fields
+          if (field === 'title') {
+            shouldClauses.push(
+              { wildcard: { "title_turkish.keyword": { value: query.toLowerCase() } } },
+              { wildcard: { "title_arabic.keyword": { value: query.toLowerCase() } } },
+              { wildcard: { "alternative_titles.keyword": { value: query.toLowerCase() } } }
+            );
+          } else if (field === 'author') {
+            shouldClauses.push(
+              { wildcard: { "author.keyword": { value: query.toLowerCase() } } },
+              { wildcard: { "author_ar.keyword": { value: query.toLowerCase() } } }
+            );
+          } else {
+            // For other fields, just use the field directly
+            shouldClauses.push({ wildcard: { [field]: { value: query.toLowerCase() } } });
           }
-        });
+
+          // Also include standard query string for better recall
+          shouldClauses.push({
+            query_string: {
+              query: query,
+              fields: fields,
+              default_operator: "AND"
+            }
+          });
+
+          must.push({
+            bool: {
+              should: shouldClauses,
+              minimum_should_match: 1
+            }
+          });
+        } else {
+          // Regular search without wildcards - use the standard approach
+          must.push({
+            query_string: {
+              query: query,
+              fields: fields,
+              default_operator: "AND"
+            }
+          });
+        }
       }
     });
 
@@ -551,6 +635,12 @@ function App() {
     performSearch();
   };
 
+  useEffect(() => {
+    if (resultsContainerRef.current) {
+      resultsContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [page]);
+
   // Download results as CSV
   const downloadResults = async () => {
     if (totalResults > 2000 && !showDownloadConfirm) {
@@ -666,6 +756,38 @@ function App() {
     startPage = Math.max(1, endPage - maxPageButtons + 1);
   }
 
+  const SkeletonResult = () => (
+    <div className="search-result skeleton">
+      {/* Title skeleton */}
+      <div className="title-section">
+        <div className="skeleton-title"></div>
+      </div>
+
+      {/* Author skeleton */}
+      <div className="author-section">
+        <div className="skeleton-author"></div>
+      </div>
+
+      {/* Three column section skeleton */}
+      <div className="details-grid">
+        <div className="details-column">
+          <div className="skeleton-field"></div>
+          <div className="skeleton-field"></div>
+          <div className="skeleton-field"></div>
+        </div>
+        <div className="details-column">
+          <div className="skeleton-field"></div>
+          <div className="skeleton-field"></div>
+        </div>
+        <div className="details-column">
+          <div className="skeleton-field"></div>
+          <div className="skeleton-field"></div>
+          <div className="skeleton-field"></div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <Layout>
       <div className="container">
@@ -758,7 +880,7 @@ function App() {
                   Apply Filters
                 </button>
                 <button className="clear-filters-button" onClick={clearFilters}>
-                  Clear All
+                  Clear Filters
                 </button>
               </div>
 
@@ -850,7 +972,7 @@ function App() {
             </div>
           </div>
 
-          <div className="main-content">
+          <div className="main-content" ref={resultsContainerRef}>
             {error && (
               <div className="error">
                 Error: {error}
@@ -858,8 +980,10 @@ function App() {
             )}
 
             {loading && (
-              <div className="loading">
-                Loading...
+              <div className="results-list">
+                {Array.from({ length: perPage }).map((_, idx) => (
+                  <SkeletonResult key={idx} />
+                ))}
               </div>
             )}
 
@@ -874,117 +998,139 @@ function App() {
                 </div>
               </div>
             )}
-
-            {!loading && !error && results.length > 0 && (
+            {loading ? (
               <>
-                <div className="results-header">
-                  <div className="results-info">
-                    Showing {((page - 1) * perPage) + 1}-{Math.min(page * perPage, totalResults)} of {totalResults.toLocaleString()} results
-                  </div>
-                  <div className="results-controls">
-                    <select
-                      className="sort-select"
-                      value={sortBy}
-                      onChange={(e) => {
-                        setSortBy(e.target.value);
-                        performSearch();
-                      }}
-                    >
-                      {SORT_OPTIONS.map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
-                    <select
-                      className="per-page-select"
-                      value={perPage}
-                      onChange={(e) => {
-                        setPerPage(parseInt(e.target.value));
-                        setPage(1);
-                        performSearch();
-                      }}
-                    >
-                      <option value="25">25 per page</option>
-                      <option value="50">50 per page</option>
-                      <option value="100">100 per page</option>
-                      <option value="200">200 per page</option>
-                    </select>
-                    <button className="export-button" onClick={downloadResults}>
-                      Download CSV
-                    </button>
-                  </div>
+                <div className="results-header skeleton-header">
+                  <div className="skeleton-line" style={{ width: '200px', height: '16px' }}></div>
+                  <div className="skeleton-line" style={{ width: '300px', height: '32px' }}></div>
                 </div>
-
                 <div className="results-list">
-                  {results.map((result) => (
-                    <div key={result.ys_id} className="search-result">
-                      {/* Title section - full width */}
-                      <div className="title-section">
-                        <a href={result.url} target="_blank" rel="noopener noreferrer" className="title-link">
-                          <div className="title-turkish">
-                            {result.title_arabic && result.title_turkish
-                              ? `${result.title_arabic} / ${result.title_turkish}`
-                              : result.title_arabic || result.title_turkish || 'Untitled'}
-                          </div>
-                        </a>
-                      </div>
-
-                      {/* Author section - full width */}
-                      <div className="author-section">
-                        {result.author_ar && (
-                          <div className="author-arabic">{result.author_ar}</div>
-                        )}
-                        {result.author && (
-                          <div className="author-turkish">{result.author}</div>
-                        )}
-                      </div>
-
-                      {/* Three column section for remaining data */}
-                      <div className="details-grid">
-                        <div className="details-column">
-                          <div className="result-field">
-                            <span className="field-label">Library:</span>
-                            <span className="field-value">{result.library || '-'}</span>
-                          </div>
-                          <div className="result-field">
-                            <span className="field-label">Folios:</span>
-                            <span className="field-value">{result.physical_description || '-'}</span>
-                          </div>
-                          <div className="result-field">
-                            <span className="field-label">ID:</span>
-                            <span className="field-value">{result.bib_number || '-'}</span>
-                          </div>
-                        </div>
-
-                        <div className="details-column">
-                          <div className="result-field">
-                            <span className="field-label">Collection:</span>
-                            <span className="field-value">{result.collection || '-'}</span>
-                          </div>
-                          <div className="result-field">
-                            <span className="field-label">Subject:</span>
-                            <span className="field-value">{result.subject || '-'}</span>
-                          </div>
-                        </div>
-
-                        <div className="details-column">
-                          <div className="result-field">
-                            <span className="field-label">Shelf Mark:</span>
-                            <span className="field-value">{result.shelf_mark || '-'}</span>
-                          </div>
-                          <div className="result-field">
-                            <span className="field-label">Date:</span>
-                            <span className="field-value">{result.date_full || result.date_year || '-'}</span>
-                          </div>
-                          <div className="result-field">
-                            <span className="field-label">Language:</span>
-                            <span className="field-value">{result.language || '-'}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                  {Array.from({ length: perPage }).map((_, idx) => (
+                    <SkeletonResult key={idx} />
                   ))}
                 </div>
               </>
+            ) : (
+              !error && results.length > 0 && (
+                <>
+                  <div className="results-header">
+                    <div className="results-info">
+                      Showing {((page - 1) * perPage) + 1}-{Math.min(page * perPage, totalResults)} of {totalResults.toLocaleString()} results
+                    </div>
+                    <div className="results-controls">
+                      <select
+                        className="sort-select"
+                        value={sortBy}
+                        onChange={(e) => {
+                          setSortBy(e.target.value);
+                          performSearch();
+                        }}
+                      >
+                        {SORT_OPTIONS.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                      <select
+                        className="per-page-select"
+                        value={perPage}
+                        onChange={(e) => {
+                          setPerPage(parseInt(e.target.value));
+                          setPage(1);
+                          performSearch();
+                        }}
+                      >
+                        <option value="25">25 per page</option>
+                        <option value="50">50 per page</option>
+                        <option value="100">100 per page</option>
+                        <option value="200">200 per page</option>
+                      </select>
+                      <button className="export-button" onClick={downloadResults}>
+                        Download CSV
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="results-list">
+                    {results.map((result) => (
+                      <div key={result.ys_id} className="search-result">
+                        {/* Title section - full width */}
+                        <div className="title-section">
+                          <a href={result.url} target="_blank" rel="noopener noreferrer" className="title-link">
+                            <div className="title-turkish">
+                              {result.title_arabic && result.title_turkish
+                                ? `${result.title_arabic} / ${result.title_turkish}`
+                                : result.title_arabic || result.title_turkish || 'Untitled'}
+                            </div>
+                          </a>
+                        </div>
+
+                        {/* Author section - full width */}
+                        <div className="author-section">
+                          {result.author_ar && (
+                            <div className="author-arabic">{result.author_ar}</div>
+                          )}
+                          {result.author && (
+                            <div className="author-turkish">{result.author}</div>
+                          )}
+                        </div>
+                        {result.alternative_titles && (
+                          <div className="alternative-titles">
+                            <span className="field-label">Alternative Titles:</span>
+                            <span className="field-value">{result.alternative_titles}</span>
+                          </div>
+                        )}
+                        {/* Three column section for remaining data */}
+                        <div className="details-grid">
+                          <div className="details-column">
+                            <div className="result-field">
+                              <span className="field-label">Library:</span>
+                              <span className="field-value">{result.library || '-'}</span>
+                            </div>
+                            <div className="result-field">
+                              <span className="field-label">Folios:</span>
+                              <span className="field-value">{result.physical_description || '-'}</span>
+                            </div>
+                            <div className="result-field">
+                              <span className="field-label">Bibliographic ID:</span>
+                              <span className="field-value">{result.bib_number || '-'}</span>
+                            </div>
+                          </div>
+
+                          <div className="details-column">
+                            <div className="result-field">
+                              <span className="field-label">Collection:</span>
+                              <span className="field-value">{result.collection || '-'}</span>
+                            </div>
+                            <div className="result-field">
+                              <span className="field-label">Subject:</span>
+                              <span className="field-value">{result.subject || '-'}</span>
+                            </div>
+                          </div>
+
+                          <div className="details-column">
+                            <div className="result-field">
+                              <span className="field-label">Shelf Mark:</span>
+                              <span className="field-value">{result.shelf_mark || '-'}</span>
+                            </div>
+                            <div className="result-field">
+                              <span className="field-label">Date:</span>
+                              <span className="field-value">{result.date_full || result.date_year || '-'}</span>
+                            </div>
+                            <div className="result-field">
+                              <span className="field-label">Language:</span>
+                              <span className="field-value">
+                                {Array.isArray(result.languages) && result.languages.length > 0
+                                  ? result.languages.join(', ')
+                                  : '-'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )
             )}
 
             {!loading && !error && results.length === 0 && (
