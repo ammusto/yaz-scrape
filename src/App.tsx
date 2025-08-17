@@ -571,6 +571,20 @@ function App() {
   }, [buildQuery, queries, library, collection, subjects, authors, languages,
     shelfMark, dateFrom, dateTo, includeUndated, sortBy, page, perPage]);
 
+  const hasPendingFilters = (): boolean => {
+    return (
+      pendingLibrary !== library ||
+      JSON.stringify(pendingCollection) !== JSON.stringify(collection) ||
+      JSON.stringify(pendingSubjects) !== JSON.stringify(subjects) ||
+      JSON.stringify(pendingAuthors) !== JSON.stringify(authors) ||
+      JSON.stringify(pendingLanguages) !== JSON.stringify(languages) ||
+      pendingShelfMark !== shelfMark ||
+      pendingDateFrom !== dateFrom ||
+      pendingDateTo !== dateTo ||
+      pendingIncludeUndated !== includeUndated
+    );
+  };
+
   // Apply filters - copies pending to active
   const applyFilters = () => {
     setLibrary(pendingLibrary);
@@ -598,6 +612,19 @@ function App() {
     }
     setQueries(validQueries);
     setPage(1);
+  };
+  const hasActiveFilters = (): boolean => {
+    return (
+      library !== '' ||
+      collection.length > 0 ||
+      subjects.length > 0 ||
+      authors.length > 0 ||
+      languages.length > 0 ||
+      shelfMark !== '' ||
+      dateFrom !== null ||
+      dateTo !== null ||
+      !includeUndated
+    );
   };
 
   // Clear all filters
@@ -632,7 +659,6 @@ function App() {
     setAggregatedAuthors(null);
     setAggregatedLanguages(null);
 
-    performSearch();
   };
 
   useEffect(() => {
@@ -756,6 +782,22 @@ function App() {
     startPage = Math.max(1, endPage - maxPageButtons + 1);
   }
 
+  const clearSearch = () => {
+    // Reset search queries to a single empty query
+    setPendingQueries([{ query: '', field: 'all' }]);
+    setQueries([{ query: '', field: 'all' }]);
+    setPage(1);
+
+    // Update URL without search queries
+    updateURL({
+      queries: [{ query: '', field: 'all' }],
+      library, collection, subjects, authors, languages,
+      shelfMark, dateFrom, dateTo, includeUndated,
+      sortBy, page: 1, perPage
+    });
+
+  };
+
   const SkeletonResult = () => (
     <div className="search-result skeleton">
       {/* Title skeleton */}
@@ -876,14 +918,17 @@ function App() {
           <div className="filters-sidebar">
             <div className="filters">
               <div className="filter-actions">
-                <button className="apply-filters-button" onClick={applyFilters}>
+                <button className="apply-filters-button" onClick={applyFilters} disabled={!hasPendingFilters()}>
                   Apply Filters
                 </button>
-                <button className="clear-filters-button" onClick={clearFilters}>
+                <button
+                  className="clear-filters-button"
+                  onClick={clearFilters}
+                  disabled={!hasActiveFilters()}
+                >
                   Clear Filters
                 </button>
               </div>
-
               <div className="filter-group">
                 <h4 className="filter-subheading">Shelf Mark</h4>
                 <input
@@ -1047,6 +1092,14 @@ function App() {
                       <button className="export-button" onClick={downloadResults}>
                         Download CSV
                       </button>
+                      {/* Add Clear Search button */}
+                      <button
+                        className="clear-search-button"
+                        onClick={clearSearch}
+                        disabled={queries.every(q => !q.query)}
+                      >
+                        Clear Search
+                      </button>
                     </div>
                   </div>
 
@@ -1209,7 +1262,7 @@ function App() {
           </div>
         )}
       </div>
-    </Layout>
+    </Layout >
   );
 }
 

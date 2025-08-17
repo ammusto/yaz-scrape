@@ -45,6 +45,28 @@ interface SearchableDropdownProps {
 const LIST_MAX_HEIGHT = 240;
 const DEFAULT_ROW_HEIGHT = 36;
 
+const toTitleCase = (str: string): string => {
+  // Handle empty strings or undefined
+  if (!str) return '';
+  
+  
+  // Split on spaces and other word separators
+  return str.split(/[\s-_]+/)
+    .map(word => {
+
+      const lowerWord = word.toLowerCase();
+      const smallWords = ['ve'];
+      
+      if (smallWords.includes(lowerWord)) {
+        return lowerWord;
+      }
+      
+      // Capitalize the first letter of other words
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(' ');
+};
+
 const parseItems = (text: string, searchIn: string): Item[] => {
   const lines = text
     .split('\n')
@@ -156,9 +178,9 @@ export default function SearchableDropdown({
     rowHeights.current = {};
 
     if (aggregatedData) {
-      // Use aggregated data with counts
+      // Use aggregated data with counts, now with title case
       const items = aggregatedData.map(item => ({
-        label: `${item.value} (${item.count.toLocaleString()})`,
+        label: `${toTitleCase(item.value)} (${item.count.toLocaleString()})`,
         value: item.value
       }));
       setItems(items);
@@ -183,7 +205,7 @@ export default function SearchableDropdown({
       setItems([]);
     }
   }, [sourceFile, searchIn, aggregatedData]);
-
+  
   const filtered = useMemo(() => {
     const q = normalize(debouncedQuery);
     if (!q) return items;
@@ -279,7 +301,7 @@ export default function SearchableDropdown({
               setItemSize,
             }}
             overscanCount={2}
-            key={`${searchIn}-${forceUpdate}`} 
+            key={`${searchIn}-${forceUpdate}`}
           >
             {Row}
           </List>
