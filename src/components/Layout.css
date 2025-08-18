@@ -1,16 +1,24 @@
 header {
   width: 100%;
 }
-
-.header-text {
+.header-text  {
   text-align: center;
-  font-size: 4rem;
-  font-weight: bold;
+
 }
 
+.header-text a {
+  font-size: 4rem;
+  font-weight: bold;
+  text-decoration: none;
+  color: black;
+}
+
+.header-text a:visited {
+  color: black; 
+}
 .header-container {
   max-width: 1200px;
-  margin: auto;
+  margin: auto; 
   padding: 5px;
 }
 

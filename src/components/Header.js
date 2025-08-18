@@ -8,7 +8,7 @@ const Header = () => {
     <header>
       <div className="header-container">
         {!location.pathname.startsWith('/viewer') && (
-          <div className="header-text">yaz-scrape</div>
+          <div className="header-text"><a href="/">yaz-scrape</a></div>
         )}
         <nav>
           <ul className="flex">
