@@ -9,25 +9,25 @@ const About = () => {
 
                 <div className="about-container">
                     <div className="text-content">
-                        <h2>About Yazma Eserler</h2>
+                        <h2>About Yaz-Scrape</h2>
 
                         <p>
-                            Yaz-scrape is a more responsive, user-friendly version of the catalogue of <a href="https://portal.yek.gov.tr/">Turkey's online manuscript collection</a> designed to make searching accessible, robust, and speedy. <strong>Note:</strong> This only contains the Manuscript subset of the catalogue (ignoring printed editions held by YEK), and clicking on any entry will take you to the online portal for more details. You must have an account on Turkey's Manuscript Portal in order to view the manuscript.
+                            Yaz-scrape is a more responsive, user-friendly version of the catalogue of <a href="https://portal.yek.gov.tr/">Turkey's online manuscript collection</a> designed to make searching more accessible, robust, and speedy. <strong>Note:</strong> This only contains the Manuscript subset of the catalogue (ignoring printed editions held by YEK), and clicking on any entry will take you to the online portal for more details. You must have an account on Turkey's Manuscript Portal in order to view the manuscript and further details.
                         </p>
 
                         <h3>Features</h3>
                         <ul>
-                            <li>Search across titles in Turkish and Arabic</li>
+                            <li>Search across titles and authors</li>
                             <li>Filter by collection, subject, and date</li>
                             <li>Export results to CSV</li>
                             <li>Links that go directly to Turkey's online portal</li>
-                            <li>LLM Generated Arabic titles and author names for those entries that lacked them (likely to contain errors!)</li>
                         </ul>
 
                         <h3>How to Use</h3>
                         <p>
                             Use the search bar to find manuscripts by title, author, or subject. Apply filters in the left sidebar
-                            to narrow your results. You will get maximum results by using wildcards, e.g. *vasiy* if you want to find works titled Vasiyet, Vasiyyet, Vasiyyetname, etc.
+                            to narrow your results. </p>
+                        <p><strong>Note:</strong> You will get maximum results by using wildcards, e.g. *vasiy* if you want to find works titled Vasiyet, Vasiyyet, Vasiyyetname, etc.
                         </p>
 
                         <h3>Search Features</h3>
@@ -92,8 +92,8 @@ const About = () => {
                             ş→s, ç→c, ğ→g, ö→o, ü→u, and handles the special Turkish i/ı distinction.
                         </p>
                         <p>
-                            <strong>Arabic Text Normalization:</strong> Comprehensive Arabic text processing removes diacritical marks
-                            (tashkeel) and normalizes letter variants. The system treats أ, إ, آ, and ا as equivalent, normalizes
+                            <strong>Arabic Text Normalization:</strong> Arabic text processing removes diacritical marks
+                            and normalizes letter variants. The search treats أ, إ, آ, and ا as equivalent, normalizes
                             ى to ي and ة to ه, and strips all harakat and other diacritical marks. This allows searching for
                             "محمد" to match "مُحَمَّد" or "محمّد" regardless of vocalization.
                         </p>
