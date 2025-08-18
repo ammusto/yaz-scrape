@@ -27,7 +27,7 @@ const About = () => {
                         <h3>How to Use</h3>
                         <p>
                             Use the search bar to find manuscripts by title, author, or subject. Apply filters in the left sidebar
-                            to narrow your results.
+                            to narrow your results. You will get maximum results by using wildcards, e.g. *vasiy* if you want to find works titled Vasiyet, Vasiyyet, Vasiyyetname, etc.
                         </p>
 
                         <h3>Search Features</h3>
